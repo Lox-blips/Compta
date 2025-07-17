@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ma Compta Esthétique - Dashboard</title>
+    <!-- Chargement de Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chargement de la police Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Icônes Heroicons -->
+    <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
+    <!-- Bibliothèque pour l'export PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" xintegrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        ::placeholder { color: #9ca3af; }
+        .hidden { display: none; }
+        .tab-btn { padding: 0.75rem 1.5rem; border-bottom: 3px solid transparent; transition: all 0.3s ease; }
+        .tab-btn.active { border-bottom-color: #db2777; color: #db2777; font-weight: 600; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        .new-row { animation: fadeIn 0.5s ease-out; }
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; z-index: 50; }
+        optgroup { font-weight: bold; font-style: italic; background-color: #f3f4f6; }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+
+        <header class="text-center mb-6"><h1 class="text-4xl sm:text-5xl font-bold text-pink-800">Ma compta Esthétique</h1><p class="text-lg text-gray-600 mt-2">Suivez votre activité en temps réel</p></header>
+
+        <nav class="flex justify-center border-b border-gray-200 mb-8">
+            <button id="tab-dashboard-btn" class="tab-btn active">📈 Dashboard</button>
+            <button id="tab-clients-btn" class="tab-btn">👥 Fichiers Client</button>
+            <button id="tab-settings-btn" class="tab-btn">⚙️ Paramètres</button>
+        </nav>
+
+        <!-- Conteneur pour la vue Dashboard -->
+        <div id="dashboard-view">
+            <!-- MISE À JOUR: Grille de 6 indicateurs -->
+            <section id="kpi" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
+                <div class="bg-white p-6 rounded-xl shadow-md"><div class="flex items-center space-x-4"><div class="bg-green-100 p-3 rounded-full"><ion-icon name="cash-outline" class="text-2xl text-green-600"></ion-icon></div><div><p class="text-gray-500 text-sm">Chiffre d'Affaires</p><p id="total-ca" class="text-2xl font-bold">0,00 €</p></div></div></div>
+                <div class="bg-white p-6 rounded-xl shadow-md"><div class="flex items-center space-x-4"><div class="bg-purple-100 p-3 rounded-full"><ion-icon name="sparkles-outline" class="text-2xl text-purple-600"></ion-icon></div><div><p class="text-gray-500 text-sm">"Petit +"</p><p id="total-petit-plus" class="text-2xl font-bold">0,00 €</p></div></div></div>
+                <div class="bg-white p-6 rounded-xl shadow-md"><div class="flex items-center space-x-4"><div class="bg-blue-100 p-3 rounded-full"><ion-icon name="trending-up-outline" class="text-2xl text-blue-600"></ion-icon></div><div><p class="text-gray-500 text-sm">Bénéfice Net Estimé</p><p id="total-benefice" class="text-2xl font-bold">0,00 €</p></div></div></div>
+                <!-- NOUVEAU: Carte Charges Variables -->
+                <div class="bg-white p-6 rounded-xl shadow-md"><div class="flex items-center space-x-4"><div class="bg-yellow-100 p-3 rounded-full"><ion-icon name="receipt-outline" class="text-2xl text-yellow-600"></ion-icon></div><div><p class="text-gray-500 text-sm">Charges Variables</p><p id="total-charges-variables" class="text-2xl font-bold">0,00 €</p></div></div></div>
+                <!-- NOUVEAU: Carte Charges Fixes -->
+                <div class="bg-white p-6 rounded-xl shadow-md"><div class="flex items-center space-x-4"><div class="bg-orange-100 p-3 rounded-full"><ion-icon name="home-outline" class="text-2xl text-orange-600"></ion-icon></div><div><p class="text-gray-500 text-sm">Charges Fixes / Mois</p><p id="total-charges-fixes" class="text-2xl font-bold">0,00 €</p></div></div></div>
+                <!-- NOUVEAU: Carte URSSAF -->
+                <div class="bg-white p-6 rounded-xl shadow-md"><div class="flex items-center space-x-4"><div class="bg-red-100 p-3 rounded-full"><ion-icon name="wallet-outline" class="text-2xl text-red-600"></ion-icon></div><div><p class="text-gray-500 text-sm">URSSAF (21.20%)</p><p id="total-urssaf" class="text-2xl font-bold">0,00 €</p></div></div></div>
+            </section>
+            <main class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="lg:col-span-1 bg-white p-6 rounded-xl shadow-md"><h2 class="text-2xl font-bold mb-6 text-pink-700">Ajouter une transaction</h2>
+                    <form id="transaction-form" class="space-y-4">
+                        <div><label for="client-select" class="block text-sm font-medium text-gray-700">Client</label><select id="client-select" class="mt-1 block w-full bg-gray-50 border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-pink-500 focus:border-pink-500"></select></div>
+                        <div><label for="transaction-date" class="block text-sm font-medium text-gray-700">Date de la transaction</label><input type="date" id="transaction-date" class="mt-1 block w-full bg-gray-50 border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-pink-500 focus:border-pink-500"></div>
+                        <div><label for="prestation" class="block text-sm font-medium text-gray-700">Prestation(s)</label><select id="prestation" class="mt-1 block w-full bg-gray-50 border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-pink-500 focus:border-pink-500"></select></div>
+                        <div id="petit-plus-details" class="hidden space-y-4 border-t border-gray-200 pt-4"><h3 class="text-sm font-semibold text-gray-800">Détails du "Petit +"</h3><div><label for="petit-plus-amount" class="block text-sm font-medium text-gray-700">Montant (€)</label><input type="number" id="petit-plus-amount" min="0" step="0.01" class="mt-1 block w-full bg-gray-50 border border-gray-300 rounded-md shadow-sm py-2 px-3" placeholder="20.00"></div><div><label for="petit-plus-description" class="block text-sm font-medium text-gray-700">Description</label><input type="text" id="petit-plus-description" class="mt-1 block w-full bg-gray-50 border border-gray-300 rounded-md shadow-sm py-2 px-3" placeholder="Ex: Pourboire"></div></div>
+                        <button type="button" id="add-prestation-btn" class="w-full text-pink-600 hover:text-pink-800 font-semibold border-2 border-pink-200 rounded-lg py-2 hover:bg-pink-50 transition-colors">+ Ajouter la sélection</button>
+                        <div id="prestations-container" class="space-y-2 pt-4"></div>
+                        <div class="pt-4"><button type="submit" class="w-full bg-pink-600 text-white font-bold py-3 px-4 rounded-lg shadow-lg hover:bg-pink-700 transition-transform transform hover:scale-105">Enregistrer la transaction</button></div>
+                    </form>
+                </div>
+                <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-md"><div class="flex justify-between items-center mb-6"><h2 class="text-2xl font-bold text-pink-700">Dernières Transactions</h2><button id="export-summary-btn" class="text-sm bg-blue-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-600 flex items-center space-x-2"><ion-icon name="document-text-outline"></ion-icon><span>Exporter le résumé</span></button></div><div class="overflow-x-auto"><table class="w-full text-left"><thead class="border-b-2 border-gray-200"><tr><th class="p-3 font-semibold">Date</th><th class="p-3 font-semibold">Client</th><th class="p-3 font-semibold">Description</th><th class="p-3 font-semibold text-right">Montant Déclaré</th><th class="p-3 font-semibold text-right">Petit +</th><th class="p-3 font-semibold text-center">Actions</th></tr></thead><tbody id="transaction-list"><tr id="no-transaction-row"><td colspan="6" class="text-center text-gray-500 p-6">Aucune transaction.</td></tr></tbody></table></div></div>
+            </main>
+        </div>
+
+        <!-- Conteneur pour la vue Fichiers Client -->
+        <div id="clients-view" class="hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="lg:col-span-1 bg-white p-6 rounded-xl shadow-md">
+                    <h2 class="text-2xl font-bold mb-6 text-pink-700">Ajouter un client</h2>
+                    <form id="add-client-form" class="space-y-4">
+                        <div><label for="new-client-name" class="block text-sm font-medium">Nom complet</label><input type="text" id="new-client-name" class="mt-1 w-full border-gray-300 rounded-md shadow-sm" required></div>
+                        <div><label for="new-client-contact" class="block text-sm font-medium">Email ou Téléphone</label><input type="text" id="new-client-contact" class="mt-1 w-full border-gray-300 rounded-md shadow-sm"></div>
+                        <div><label for="new-client-notes" class="block text-sm font-medium">Notes</label><textarea id="new-client-notes" rows="3" class="mt-1 w-full border-gray-300 rounded-md shadow-sm"></textarea></div>
+                        <button type="submit" class="w-full bg-pink-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-pink-700">Ajouter le client</button>
+                    </form>
+                </div>
+                <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-md">
+                    <h2 class="text-2xl font-bold mb-6 text-pink-700">Liste des Clients</h2>
+                    <div class="overflow-x-auto"><table class="w-full text-left"><thead class="border-b-2"><tr><th class="p-3">Nom</th><th class="p-3">Contact</th><th class="p-3 text-center">RDV (Fidélité)</th></tr></thead><tbody id="client-list"></tbody></table></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Conteneur pour la vue Paramètres -->
+        <div id="settings-view" class="hidden">
+            <form id="settings-form" class="space-y-10">
+                <div class="bg-white p-6 sm:p-8 rounded-xl shadow-md"><h2 class="text-2xl font-bold mb-6 text-pink-700">Paramètres des Prestations</h2><div class="space-y-4" id="settings-prestations-list"></div></div>
+                <div class="bg-white p-6 sm:p-8 rounded-xl shadow-md"><h2 class="text-2xl font-bold mb-6 text-pink-700">Paramètres des Consommables</h2><div class="space-y-4" id="settings-consommables-list"></div><button type="button" id="add-consommable-btn" class="mt-6 text-sm text-pink-600 hover:text-pink-800 font-semibold">+ Ajouter un consommable</button></div>
+                <div class="mt-8 text-right"><button type="submit" class="bg-pink-600 text-white font-bold py-3 px-6 rounded-lg shadow-lg hover:bg-pink-700">Enregistrer les modifications</button></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="consommables-modal" class="modal-overlay hidden"><div class="bg-white rounded-xl shadow-2xl w-full max-w-md m-4"><div class="p-6 border-b"><h3 class="text-xl font-bold text-pink-700" id="modal-title">Gérer les consommables</h3></div><div class="p-6 max-h-80 overflow-y-auto" id="modal-body"></div><div class="p-4 bg-gray-50 text-right rounded-b-xl"><button type="button" id="modal-cancel-btn" class="text-gray-600 mr-4">Annuler</button><button type="button" id="modal-save-btn" class="bg-pink-600 text-white font-bold py-2 px-4 rounded-lg">Valider</button></div></div></div>
+    <div id="loyalty-alert-modal" class="modal-overlay hidden"><div class="bg-white rounded-xl shadow-2xl w-full max-w-md m-4 p-6 text-center"><div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-yellow-100 mb-4"><ion-icon name="star" class="text-4xl text-yellow-500"></ion-icon></div><h3 class="text-2xl font-bold text-gray-900">Félicitations !</h3><p class="mt-2 text-gray-600" id="loyalty-alert-message"></p><button id="loyalty-alert-close-btn" class="mt-6 w-full bg-yellow-500 text-white font-bold py-2 px-4 rounded-lg">Génial !</button></div></div>
+
+<script>
+    // --- DONNÉES DE L'APPLICATION ---
+    let clientsData = [ { id: 1, name: 'Marie Dupont', contact: 'marie.d@email.com', notes: 'Préfère le thé vert', rdvCount: 0 } ];
+    let consommablesData = [ { id: 1, nom: 'Lime', cout: 0.45 }, { id: 2, nom: 'Bloc polissoir', cout: 0.06 }, { id: 3, nom: 'Brosse', cout: 0.22 }, { id: 4, nom: 'Pinceau poussière', cout: 0.91 }, { id: 5, nom: 'Alèse rose', cout: 0.15 }, { id: 6, nom: 'Gants', cout: 0.10 } ];
+    let prestationsData = [
+        { id: 1, nom: "Semi-permanent mains/pieds", tarif: 30.00, consommables: [1, 2, 3, 5, 6], categorie: "💅 Ongles" }, { id: 2, nom: "Mini gainage", tarif: 40.00, consommables: [1, 2, 3, 5, 6], categorie: "💅 Ongles" }, { id: 3, nom: "Remplissage", tarif: 45.00, consommables: [1, 2, 3, 5, 6], categorie: "💅 Ongles" }, { id: 4, nom: "Pose complète S/M", tarif: 50.00, consommables: [1, 2, 3, 4, 5, 6], categorie: "💅 Ongles" }, { id: 5, nom: "Pose complète L", tarif: 55.00, consommables: [1, 2, 3, 4, 5, 6], categorie: "💅 Ongles" },
+        { id: 6, nom: "Sourcils femme", tarif: 8.00, consommables: [6], categorie: "✨ Épilation" }, { id: 7, nom: "Lèvre", tarif: 6.00, consommables: [6], categorie: "✨ Épilation" }, { id: 8, nom: "Aisselles", tarif: 9.00, consommables: [6], categorie: "✨ Épilation" }, { id: 9, nom: "Jambes entières", tarif: 29.00, consommables: [5, 6], categorie: "✨ Épilation" }, { id: 10, nom: "Maillot intégral femme", tarif: 24.00, consommables: [5, 6], categorie: "✨ Épilation" },
+        { id: 11, nom: "CHRONOS Corps", tarif: 39.00, consommables: [5, 6], categorie: "🧖‍♀️ Soins Corps" }, { id: 12, nom: "APHRODITE Corps", tarif: 59.00, consommables: [5, 6], categorie: "🧖‍♀️ Soins Corps" }, { id: 13, nom: "LOMI-LOMI", tarif: 59.00, consommables: [5, 6], categorie: "🧖‍♀️ Soins Corps" },
+        { id: 14, nom: "CHRONOS Visage", tarif: 39.00, consommables: [5, 6], categorie: "💆‍♀️ Soins Visage" }, { id: 15, nom: "APHRODITE Visage", tarif: 59.00, consommables: [5, 6], categorie: "💆‍♀️ Soins Visage" }, { id: 16, nom: "KOBIDO", tarif: 59.00, consommables: [5, 6], categorie: "💆‍♀️ Soins Visage" },
+        { id: 17, nom: "Réhaussement cils + teinture", tarif: 54.00, consommables: [6], categorie: "👁️ Cils & Sourcils" }, { id: 18, nom: "Teinture cils", tarif: 15.00, consommables: [6], categorie: "👁️ Cils & Sourcils" }, { id: 19, nom: "Teinture sourcils", tarif: 12.00, consommables: [6], categorie: "👁️ Cils & Sourcils" },
+        { id: 99, nom: "--- Petit + (montant libre) ---", tarif: 0, consommables: [], isSpecial: true, categorie: "Autre" }
+    ];
+    const chargesFixesData = [ { nom: "Loyer", montant: 235.00 }, { nom: "Électricité", montant: 51.50 }, { nom: "Planity", montant: 40.00 }, { nom: "Canva", montant: 6.00 }, { nom: "Internet", montant: 22.00 }, { nom: "Téléphone", montant: 7.99 }, { nom: "Assurance Pro", montant: 20.43 } ];
+    let transactions = [], selectedPrestations = [], currentEditingPrestationId = null;
+
+    const dom = {
+        dashboardView: document.getElementById('dashboard-view'), clientsView: document.getElementById('clients-view'), settingsView: document.getElementById('settings-view'),
+        tabDashboardBtn: document.getElementById('tab-dashboard-btn'), tabClientsBtn: document.getElementById('tab-clients-btn'), tabSettingsBtn: document.getElementById('tab-settings-btn'),
+        form: document.getElementById('transaction-form'), clientSelect: document.getElementById('client-select'), transactionDate: document.getElementById('transaction-date'), prestationSelect: document.getElementById('prestation'),
+        addPrestationBtn: document.getElementById('add-prestation-btn'), prestationsContainer: document.getElementById('prestations-container'), transactionList: document.getElementById('transaction-list'),
+        petitPlusDetails: document.getElementById('petit-plus-details'), petitPlusAmountInput: document.getElementById('petit-plus-amount'), petitPlusDescInput: document.getElementById('petit-plus-description'),
+        settingsForm: document.getElementById('settings-form'), settingsPrestationsList: document.getElementById('settings-prestations-list'), settingsConsommablesList: document.getElementById('settings-consommables-list'),
+        addConsommableBtn: document.getElementById('add-consommable-btn'), modal: document.getElementById('consommables-modal'), modalTitle: document.getElementById('modal-title'),
+        modalBody: document.getElementById('modal-body'), modalCancelBtn: document.getElementById('modal-cancel-btn'), modalSaveBtn: document.getElementById('modal-save-btn'),
+        exportSummaryBtn: document.getElementById('export-summary-btn'), addClientForm: document.getElementById('add-client-form'), clientList: document.getElementById('client-list'),
+        loyaltyModal: document.getElementById('loyalty-alert-modal'), loyaltyModalMsg: document.getElementById('loyalty-alert-message'), loyaltyModalCloseBtn: document.getElementById('loyalty-alert-close-btn')
+    };
+
+    const showView = (viewToShow) => {
+        [dom.dashboardView, dom.clientsView, dom.settingsView].forEach(v => v.classList.add('hidden'));
+        [dom.tabDashboardBtn, dom.tabClientsBtn, dom.tabSettingsBtn].forEach(b => b.classList.remove('active'));
+        if (viewToShow === 'dashboard') { dom.dashboardView.classList.remove('hidden'); dom.tabDashboardBtn.classList.add('active'); }
+        else if (viewToShow === 'clients') { dom.clientsView.classList.remove('hidden'); dom.tabClientsBtn.classList.add('active'); renderClients(); }
+        else if (viewToShow === 'settings') { dom.settingsView.classList.remove('hidden'); dom.tabSettingsBtn.classList.add('active'); renderSettings(); }
+    };
+
+    const populatePrestationSelect = () => { dom.prestationSelect.innerHTML = '<option value="" disabled selected>Choisir...</option>'; const categories = [...new Set(prestationsData.map(p => p.categorie))]; categories.forEach(cat => { if (cat === 'Autre') return; const optgroup = document.createElement('optgroup'); optgroup.label = cat; prestationsData.filter(p => p.categorie === cat && !p.isSpecial).forEach(p => { const o = document.createElement('option'); o.value = p.id; o.textContent = `${p.nom} - ${p.tarif.toFixed(2)} €`; optgroup.appendChild(o); }); dom.prestationSelect.appendChild(optgroup); }); const specialOption = prestationsData.find(p => p.isSpecial); if(specialOption) { const o = document.createElement('option'); o.value = specialOption.id; o.textContent = specialOption.nom; dom.prestationSelect.appendChild(o); } };
+    const handlePrestationChange = () => { const p = prestationsData.find(p => p.id == dom.prestationSelect.value); dom.petitPlusDetails.classList.toggle('hidden', !(p && p.isSpecial)); };
+    const addPrestationToSelection = () => { const pId = dom.prestationSelect.value; if (!pId) return; const pTemplate = prestationsData.find(p => p.id == pId); if (pTemplate.isSpecial) { const amount = parseFloat(dom.petitPlusAmountInput.value); if (amount > 0) { selectedPrestations.push({ ...pTemplate, nom: dom.petitPlusDescInput.value.trim() || 'Petit +', tarif: amount, uniqueId: Date.now() }); dom.petitPlusAmountInput.value = ''; dom.petitPlusDescInput.value = ''; } else { alert("Montant invalide."); return; } } else { if (!selectedPrestations.find(p => p.id === pTemplate.id)) { selectedPrestations.push(pTemplate); } else { alert('Prestation déjà ajoutée.'); return; } } renderSelectedPrestations(); dom.prestationSelect.value = ''; handlePrestationChange(); };
+    const renderSelectedPrestations = () => { dom.prestationsContainer.innerHTML = ''; selectedPrestations.forEach((p, i) => { const div = document.createElement('div'); div.className = 'flex items-center justify-between bg-pink-50 p-2 rounded-md'; div.innerHTML = `<span>${p.nom} (${p.tarif.toFixed(2)} €)</span><button type="button" class="text-red-500" onclick="removePrestation(${i})">&times;</button>`; dom.prestationsContainer.appendChild(div); }); };
+    const removePrestation = (index) => { selectedPrestations.splice(index, 1); renderSelectedPrestations(); };
+    const handleFormSubmit = (e) => { e.preventDefault(); const clientId = parseInt(dom.clientSelect.value); if (!clientId) { alert("Veuillez sélectionner un client."); return; } if (selectedPrestations.length === 0) { alert("Ajoutez une prestation."); return; } const dateValue = dom.transactionDate.value; if(!dateValue) { alert("Veuillez sélectionner une date."); return; } let montantDeclare = 0, petitPlus = 0, totalCharges = 0; selectedPrestations.forEach(p => { if (p.isSpecial) { petitPlus += p.tarif; } else { montantDeclare += p.tarif; } if (p.consommables) { p.consommables.forEach(cId => { const conso = consommablesData.find(c => c.id === cId); if (conso) totalCharges += conso.cout; }); } }); const client = clientsData.find(c => c.id === clientId); transactions.push({ id: Date.now(), date: new Date(dateValue + 'T00:00:00'), clientId: clientId, clientName: client.name, prestations: [...selectedPrestations], montantDeclare, petitPlus, totalCharges }); client.rdvCount++; if(client.rdvCount === 10) showLoyaltyAlert(client.name); updateUI(); dom.form.reset(); selectedPrestations = []; renderSelectedPrestations(); handlePrestationChange(); populateClientSelect(); dom.transactionDate.value = new Date().toISOString().split('T')[0]; };
+    const updateUI = () => { renderTransactionList(); updateKPIs(); };
+    const renderTransactionList = () => { dom.transactionList.innerHTML = ''; if (transactions.length === 0) { dom.transactionList.innerHTML = `<tr><td colspan="6" class="text-center text-gray-500 p-6">Aucune transaction.</td></tr>`; return; } transactions.slice().reverse().forEach(tx => { const row = document.createElement('tr'); row.className = 'border-b border-gray-200 new-row'; row.innerHTML = `<td class="p-3 text-sm">${tx.date.toLocaleDateString('fr-FR')}</td><td class="p-3">${tx.clientName}</td><td class="p-3 text-sm">${tx.prestations.map(p => p.nom).join(', ')}</td><td class="p-3 text-right font-semibold">${tx.montantDeclare.toFixed(2)} €</td><td class="p-3 text-right text-purple-600">${tx.petitPlus.toFixed(2)} €</td><td class="p-3 text-center"><button onclick="exportTransactionPDF(${tx.id})" class="text-blue-500 hover:text-blue-700 text-2xl"><ion-icon name="download-outline"></ion-icon></button></td>`; dom.transactionList.appendChild(row); }); };
+
+    // MISE À JOUR: Fonction de calcul des KPIs pour afficher toutes les charges
+    const updateKPIs = () => {
+        const totalCA = transactions.reduce((s, tx) => s + tx.montantDeclare, 0);
+        const totalPetitPlus = transactions.reduce((s, tx) => s + tx.petitPlus, 0);
+        const totalChargesVar = transactions.reduce((s, tx) => s + tx.totalCharges, 0);
+        const totalChargesFix = chargesFixesData.reduce((s, c) => s + c.montant, 0);
+        const totalUrssaf = totalCA * 0.212;
+        const totalBenefice = totalCA + totalPetitPlus - totalChargesVar - totalChargesFix - totalUrssaf;
+
+        document.getElementById('total-ca').textContent = `${totalCA.toFixed(2)} €`;
+        document.getElementById('total-petit-plus').textContent = `${totalPetitPlus.toFixed(2)} €`;
+        document.getElementById('total-charges-variables').textContent = `${totalChargesVar.toFixed(2)} €`;
+        document.getElementById('total-charges-fixes').textContent = `${totalChargesFix.toFixed(2)} €`;
+        document.getElementById('total-urssaf').textContent = `${totalUrssaf.toFixed(2)} €`;
+        document.getElementById('total-benefice').textContent = `${totalBenefice.toFixed(2)} €`;
+    };
+
+    const renderSettings = () => { dom.settingsPrestationsList.innerHTML = ''; prestationsData.filter(p => !p.isSpecial).forEach(p => { const div = document.createElement('div'); div.className = 'grid grid-cols-1 md:grid-cols-4 gap-4 items-center border-t pt-4'; div.innerHTML = `<input type="text" data-id="${p.id}" data-field="nom" value="${p.nom}" class="md:col-span-2 bg-gray-50 border rounded p-2"><div class="flex items-center"><input type="number" step="0.01" data-id="${p.id}" data-field="tarif" value="${p.tarif.toFixed(2)}" class="w-full bg-gray-50 border rounded p-2"><span class="ml-2">€</span></div><button type="button" onclick="openConsommablesModal(${p.id})" class="text-sm bg-gray-200 hover:bg-gray-300 p-2 rounded">Gérer consommables</button>`; dom.settingsPrestationsList.appendChild(div); }); dom.settingsConsommablesList.innerHTML = ''; consommablesData.forEach(c => { const div = document.createElement('div'); div.className = 'grid grid-cols-1 md:grid-cols-3 gap-4 items-center border-t pt-4'; div.innerHTML = `<input type="text" data-id="${c.id}" data-field="nom" value="${c.nom}" class="md:col-span-2 bg-gray-50 border rounded p-2"><div class="flex items-center"><input type="number" step="0.01" data-id="${c.id}" data-field="cout" value="${c.cout.toFixed(2)}" class="w-full bg-gray-50 border rounded p-2"><span class="ml-2">€</span></div>`; dom.settingsConsommablesList.appendChild(div); }); };
+    const handleAddConsommable = () => { const newId = Math.max(...consommablesData.map(c => c.id), 0) + 1; consommablesData.push({ id: newId, nom: 'Nouveau consommable', cout: 0 }); renderSettings(); };
+    const handleSettingsSave = (e) => { e.preventDefault(); dom.settingsPrestationsList.querySelectorAll('input[data-id]').forEach(i => { const p = prestationsData.find(p => p.id == i.dataset.id); if(p) p[i.dataset.field] = i.type === 'number' ? parseFloat(i.value) : i.value; }); dom.settingsConsommablesList.querySelectorAll('input[data-id]').forEach(i => { const c = consommablesData.find(c => c.id == i.dataset.id); if(c) c[i.dataset.field] = i.type === 'number' ? parseFloat(i.value) : i.value; }); alert('Paramètres enregistrés !'); populatePrestationSelect(); showView('dashboard'); };
+
+    const openConsommablesModal = (prestationId) => { currentEditingPrestationId = prestationId; const prestation = prestationsData.find(p => p.id === prestationId); if (!prestation) return; dom.modalTitle.textContent = `Consommables pour : ${prestation.nom}`; dom.modalBody.innerHTML = ''; consommablesData.forEach(c => { const isChecked = prestation.consommables.includes(c.id); dom.modalBody.innerHTML += `<label class="flex items-center space-x-3 p-2 hover:bg-gray-100 rounded"><input type="checkbox" data-conso-id="${c.id}" class="h-5 w-5 rounded border-gray-300 text-pink-600 focus:ring-pink-500" ${isChecked ? 'checked' : ''}><span>${c.nom} (${c.cout.toFixed(2)} €)</span></label>`; }); dom.modal.classList.remove('hidden'); };
+    const closeModal = () => { dom.modal.classList.add('hidden'); currentEditingPrestationId = null; };
+    const saveConsommablesFromModal = () => { if (currentEditingPrestationId === null) return; const prestation = prestationsData.find(p => p.id === currentEditingPrestationId); if (!prestation) return; const selectedIds = []; dom.modalBody.querySelectorAll('input:checked').forEach(input => selectedIds.push(parseInt(input.dataset.consoId))); prestation.consommables = selectedIds; closeModal(); };
+
+    const exportTransactionPDF = (txId) => { const tx = transactions.find(t => t.id === txId); if (!tx) return; const dateStr = tx.date.toLocaleDateString('fr-FR'); let itemsHtml = ''; tx.prestations.forEach(p => { const price = p.isPetitPlus ? `<i>${p.tarif.toFixed(2)} € (Petit +)</i>` : `${p.tarif.toFixed(2)} €`; itemsHtml += `<tr><td style="padding: 8px; border-bottom: 1px solid #eee;">${p.nom}</td><td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">${price}</td></tr>`; }); const total = tx.montantDeclare + tx.petitPlus; const element = `<div style="font-family: 'Inter', sans-serif; color: #333; padding: 40px;"><h1 style="color: #db2777; text-align: center;">Facture</h1><p style="text-align: center;">Mon Institut de Beauté</p><div style="margin-top: 40px; margin-bottom: 40px;"><p><strong>Client :</strong> ${tx.clientName}</p><p><strong>Date :</strong> ${dateStr}</p><p><strong>Facture N° :</strong> ${tx.id}</p></div><table style="width: 100%; border-collapse: collapse;"><thead><tr><th style="padding: 8px; border-bottom: 2px solid #333; text-align: left;">Description</th><th style="padding: 8px; border-bottom: 2px solid #333; text-align: right;">Montant</th></tr></thead><tbody>${itemsHtml}</tbody></table><div style="text-align: right; margin-top: 20px;"><h2 style="font-size: 1.5rem;">Total : ${total.toFixed(2)} €</h2></div><p style="text-align: center; font-size: 0.8rem; color: #999; margin-top: 50px;">Merci de votre confiance !</p></div>`; const opt = { margin: 0.5, filename: `Facture-${tx.id}-${tx.clientName}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' } }; html2pdf().set(opt).from(element).save(); };
+    const exportSummaryPDF = () => { if (transactions.length === 0) { alert("Aucune transaction à exporter."); return; } const dateStr = new Date().toLocaleDateString('fr-FR'); let rowsHtml = ''; transactions.forEach(tx => { rowsHtml += `<tr><td style="padding: 5px; border-bottom: 1px solid #eee;">${tx.date.toLocaleDateString('fr-FR')}</td><td style="padding: 5px; border-bottom: 1px solid #eee;">${tx.clientName}</td><td style="padding: 5px; border-bottom: 1px solid #eee; text-align: right;">${tx.montantDeclare.toFixed(2)} €</td><td style="padding: 5px; border-bottom: 1px solid #eee; text-align: right;">${tx.petitPlus.toFixed(2)} €</td></tr>`; }); const element = `<div style="font-family: 'Inter', sans-serif; color: #333; padding: 40px;"><h1 style="color: #db2777; text-align: center;">Résumé des Transactions</h1><p style="text-align: center;">Généré le ${dateStr}</p><div style="margin: 30px 0; display: grid; grid-template-columns: 1fr 1fr; gap: 20px;"><div style="border: 1px solid #eee; padding: 15px; border-radius: 8px;"><strong>Chiffre d'Affaires:</strong> ${document.getElementById('total-ca').textContent}</div><div style="border: 1px solid #eee; padding: 15px; border-radius: 8px;"><strong>Bénéfice Net Estimé:</strong> ${document.getElementById('total-benefice').textContent}</div></div><table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;"><thead><tr><th style="padding: 8px; border-bottom: 2px solid #333; text-align: left;">Date</th><th style="padding: 8px; border-bottom: 2px solid #333; text-align: left;">Client</th><th style="padding: 8px; border-bottom: 2px solid #333; text-align: right;">Déclaré</th><th style="padding: 8px; border-bottom: 2px solid #333; text-align: right;">Petit +</th></tr></thead><tbody>${rowsHtml}</tbody></table></div>`; const opt = { margin: 0.5, filename: `Resume-Transactions-${dateStr}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' } }; html2pdf().set(opt).from(element).save(); };
+
+    const renderClients = () => { dom.clientList.innerHTML = ''; if (clientsData.length === 0) { dom.clientList.innerHTML = `<tr><td colspan="3" class="text-center p-6 text-gray-500">Aucun client enregistré.</td></tr>`; return; } clientsData.forEach(c => { const row = document.createElement('tr'); row.className = 'border-b'; row.innerHTML = `<td class="p-3">${c.name}</td><td class="p-3 text-sm text-gray-600">${c.contact || 'N/A'}</td><td class="p-3 text-center font-semibold">${c.rdvCount}</td>`; dom.clientList.appendChild(row); }); };
+    const populateClientSelect = () => { dom.clientSelect.innerHTML = '<option value="" disabled selected>Choisir un client...</option>'; clientsData.forEach(c => { const o = document.createElement('option'); o.value = c.id; o.textContent = c.name; dom.clientSelect.appendChild(o); }); };
+    const handleAddClient = (e) => { e.preventDefault(); const name = document.getElementById('new-client-name').value; if (!name.trim()) { alert("Le nom est obligatoire."); return; } const newId = Math.max(...clientsData.map(c => c.id), 0) + 1; clientsData.push({ id: newId, name: name.trim(), contact: document.getElementById('new-client-contact').value.trim(), notes: document.getElementById('new-client-notes').value.trim(), rdvCount: 0 }); dom.addClientForm.reset(); renderClients(); populateClientSelect(); };
+    const showLoyaltyAlert = (clientName) => { dom.loyaltyModalMsg.textContent = `${clientName} a atteint son 10ème rendez-vous ! Pensez à lui offrir un petit quelque chose. 😉`; dom.loyaltyModal.classList.remove('hidden'); };
+
+    dom.tabDashboardBtn.addEventListener('click', () => showView('dashboard'));
+    dom.tabClientsBtn.addEventListener('click', () => showView('clients'));
+    dom.tabSettingsBtn.addEventListener('click', () => showView('settings'));
+    dom.prestationSelect.addEventListener('change', handlePrestationChange);
+    dom.addPrestationBtn.addEventListener('click', addPrestationToSelection);
+    dom.form.addEventListener('submit', handleFormSubmit);
+    dom.settingsForm.addEventListener('submit', handleSettingsSave);
+    dom.addConsommableBtn.addEventListener('click', handleAddConsommable);
+    dom.modalCancelBtn.addEventListener('click', closeModal);
+    dom.modalSaveBtn.addEventListener('click', saveConsommablesFromModal);
+    dom.exportSummaryBtn.addEventListener('click', exportSummaryPDF);
+    dom.addClientForm.addEventListener('submit', handleAddClient);
+    dom.loyaltyModalCloseBtn.addEventListener('click', () => dom.loyaltyModal.classList.add('hidden'));
+
+    document.addEventListener('DOMContentLoaded', () => {
+        dom.transactionDate.value = new Date().toISOString().split('T')[0];
+        populatePrestationSelect();
+        populateClientSelect();
+        updateUI();
+    });
+</script>
+
+</body>
+</html>
